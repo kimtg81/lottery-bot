@@ -1,31 +1,42 @@
-name: Lottery Auto Buy
+name: Test Lottery Run
 
 on:
-  schedule:
-    - cron: '0 4 * * 1' # 월요일 13:00 (KST)
-    - cron: '0 13 * * 4' # 목요일 22:00 (KST)
-    - cron: '5 13 * * 4' # 목요일 22:05 (KST)
-  workflow_dispatch: # 수동 실행 가능
+  workflow_dispatch: # 수동 실행을 위해 필요
 
 jobs:
-  run_lotto:
+  run_all:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
+      - uses: actions/checkout@v4
       - name: Set up Python
         uses: actions/setup-python@v4
-        with:
-          python-version: '3.9'
+        with: {python-version: '3.9'}
+      - run: pip install -r requirements.txt
 
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-
-      # [테스트] 수동 실행 시 로또 구매가 바로 동작하도록 설정
-      - name: Run Lotto
+      # 1. 로또 구매: 수동 4게임 + 자동 1게임
+      - name: Run Lotto Test
         run: |
-          python main.py --type lotto --manual "3,5,9,25,31,37" --count 4 --auto 1
+          echo "수동 구매 4회 진행"
+          python main.py --type lotto --lotto_type 1 --number "3,5,9,25,31,37"
+          python main.py --type lotto --lotto_type 1 --number "3,5,9,25,31,37"
+          python main.py --type lotto --lotto_type 1 --number "3,5,9,25,31,37"
+          python main.py --type lotto --lotto_type 1 --number "3,5,9,25,31,37"
+          echo "자동 구매 1회 진행"
+          python main.py --type lotto --lotto_type 0
+        env:
+          USER_ID: ${{ secrets.USER_ID }}
+          USER_PW: ${{ secrets.USER_PW }}
+
+      # 2. 연금복권 811203 구매
+      - name: Run Pension 811203 Test
+        run: python main.py --type pension --number 811203
+        env:
+          USER_ID: ${{ secrets.USER_ID }}
+          USER_PW: ${{ secrets.USER_PW }}
+
+      # 3. 연금복권 359517 구매
+      - name: Run Pension 359517 Test
+        run: python main.py --type pension --number 359517
         env:
           USER_ID: ${{ secrets.USER_ID }}
           USER_PW: ${{ secrets.USER_PW }}
