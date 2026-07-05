@@ -1,0 +1,58 @@
+name: Lottery Auto Buy
+
+on:
+  schedule:
+    # 1. 월요일 오후 1시 (KST) - 로또 (수동 4 + 자동 1)
+    - cron: '0 4 * * 1'
+    # 2. 목요일 오후 10시 (KST) - 연금복권 (811203)
+    - cron: '0 13 * * 4'
+    # 3. 목요일 오후 10시 5분 (KST) - 연금복권 (359517)
+    - cron: '5 13 * * 4'
+  workflow_dispatch:
+
+jobs:
+  buy_lottery:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # 1. 로또 구매 (월요일 13:00)
+      # 수동 4회 + 자동 1회 실행을 위해 명령어를 5번 반복하거나 봇 기능에 따라 조정
+      - name: Run Lotto (Manual & Auto)
+        if: github.event.schedule == '0 4 * * 1'
+        run: |
+          # 수동 4회 구매
+          python main.py --type lotto --numbers "3,5,9,25,31,37"
+          python main.py --type lotto --numbers "3,5,9,25,31,37"
+          python main.py --type lotto --numbers "3,5,9,25,31,37"
+          python main.py --type lotto --numbers "3,5,9,25,31,37"
+          # 자동 1회 구매
+          python main.py --type lotto --auto
+        env:
+          USER_ID: ${{ secrets.USER_ID }}
+          USER_PW: ${{ secrets.USER_PW }}
+
+      # 2. 연금복권 (목요일 22:00)
+      - name: Run Pension 811203
+        if: github.event.schedule == '0 13 * * 4'
+        run: python main.py --type pension --number 811203 --all_joo
+        env:
+          USER_ID: ${{ secrets.USER_ID }}
+          USER_PW: ${{ secrets.USER_PW }}
+
+      # 3. 연금복권 (목요일 22:05)
+      - name: Run Pension 359517
+        if: github.event.schedule == '5 13 * * 4'
+        run: python main.py --type pension --number 359517 --all_joo
+        env:
+          USER_ID: ${{ secrets.USER_ID }}
+          USER_PW: ${{ secrets.USER_PW }}
