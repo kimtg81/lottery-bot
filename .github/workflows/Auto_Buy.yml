@@ -1,10 +1,14 @@
-name: Test Lottery Run
+name: Lottery Auto Buy
 
 on:
-  workflow_dispatch: # 수동 실행을 위해 필요
+  schedule:
+    - cron: '0 4 * * 1' # 월요일 13:00 (KST) - 로또
+    - cron: '0 13 * * 4' # 목요일 22:00 (KST) - 연금복권 811203
+    - cron: '5 13 * * 4' # 목요일 22:05 (KST) - 연금복권 359517
+  workflow_dispatch:
 
 jobs:
-  run_all:
+  run_lottery:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -13,30 +17,29 @@ jobs:
         with: {python-version: '3.9'}
       - run: pip install -r requirements.txt
 
-      # 1. 로또 구매: 수동 4게임 + 자동 1게임
-      - name: Run Lotto Test
+      # 1. 로또 (월요일 13:00) - 수동 4 + 자동 1
+      # 이 봇은 보통 config.json을 읽거나 환경변수를 사용합니다.
+      # 수동 번호 설정이 명령어로 불가능할 경우, config.json을 수정해야 합니다.
+      - name: Run Lotto
+        if: github.event.schedule == '0 4 * * 1' || github.event_name == 'workflow_dispatch'
         run: |
-          echo "수동 구매 4회 진행"
-          python main.py --type lotto --lotto_type 1 --number "3,5,9,25,31,37"
-          python main.py --type lotto --lotto_type 1 --number "3,5,9,25,31,37"
-          python main.py --type lotto --lotto_type 1 --number "3,5,9,25,31,37"
-          python main.py --type lotto --lotto_type 1 --number "3,5,9,25,31,37"
-          echo "자동 구매 1회 진행"
-          python main.py --type lotto --lotto_type 0
+          python lotto645.py --manual "3,5,9,25,31,37" --count 4 --auto 1
         env:
           USER_ID: ${{ secrets.USER_ID }}
           USER_PW: ${{ secrets.USER_PW }}
 
-      # 2. 연금복권 811203 구매
-      - name: Run Pension 811203 Test
-        run: python main.py --type pension --number 811203
+      # 2. 연금복권 (목요일 22:00)
+      - name: Run Pension 811203
+        if: github.event.schedule == '0 13 * * 4' || github.event_name == 'workflow_dispatch'
+        run: python win720.py --number 811203
         env:
           USER_ID: ${{ secrets.USER_ID }}
           USER_PW: ${{ secrets.USER_PW }}
 
-      # 3. 연금복권 359517 구매
-      - name: Run Pension 359517 Test
-        run: python main.py --type pension --number 359517
+      # 3. 연금복권 (목요일 22:05)
+      - name: Run Pension 359517
+        if: github.event.schedule == '5 13 * * 4' || github.event_name == 'workflow_dispatch'
+        run: python win720.py --number 359517
         env:
           USER_ID: ${{ secrets.USER_ID }}
           USER_PW: ${{ secrets.USER_PW }}
